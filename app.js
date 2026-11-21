@@ -48,6 +48,14 @@
       sound: "coin",
       message: (granted) => "+" + granted + " FISH · RELEASE CODE REDEEMED!"
     },
+   FIFTYFIFTY1: {
+     once: true,
+     uses: 50,
+     fish: 50,
+     sound: "coin",
+     message: (granted) => "+" + granted + " FISH · FIFTYFIFTY CODE REDEEMED!"
+    },
+
     BONUS: {
       once: true,
       fish: 125,
