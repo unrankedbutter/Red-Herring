@@ -37,6 +37,12 @@
       sound: "coin",
       message: (granted) => "+" + granted + " FISH · RELEASE CODE REDEEMED!"
     },
+    BONUS: {
+      once: true,
+      fish: 125,
+      sound: "coin",
+      message: (granted) => "+" + granted + " FISH · BONUS CODE REDEEMED!"
+    },
     GIVEMEEVERYTHINGPLEASE: {
       unlockAll: true,
       sound: "buy",
