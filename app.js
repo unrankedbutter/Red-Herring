@@ -35,29 +35,36 @@
     return Number.isFinite(n) && n > 0 ? n : null;
   };
 
-  const CODES = {
-    RHDEV2026: {
-      dev: true,
-      message: "CODE ACCEPTED — DEV TOOLS READY"
-    },
-    RELEASE: {
-      once: true,
-      fish: 175,
-      sound: "coin",
-      message: (granted) => "+" + granted + " FISH · RELEASE CODE REDEEMED!"
-    },
-    BONUS: {
-      once: true,
-      fish: 125,
-      sound: "coin",
-      message: (granted) => "+" + granted + " FISH · BONUS CODE REDEEMED!"
-    },
-    GIVEMEEVERYTHINGPLEASE: {
-      unlockAll: true,
-      sound: "buy",
-      message: "ALL SHOP ITEMS UNLOCKED!"
-    }
-  };
+const CODES = {
+  RHDEV2026: {
+    dev: true,
+    message: "CODE ACCEPTED — DEV TOOLS READY"
+  },
+  RELEASE: {
+    once: true,
+    fish: 175,
+    sound: "coin",
+    message: (granted) => "+" + granted + " FISH · RELEASE CODE REDEEMED!"
+  },
+  TESTUSES: {
+    once: true,
+    uses: 1,
+    fish: 175,
+    sound: "coin",
+    message: (granted) => "+" + granted + " FISH · TESTUSES CODE REDEEMED!"
+  },
+  BONUS: {
+    once: true,
+    fish: 125,
+    sound: "coin",
+    message: (granted) => "+" + granted + " FISH · BONUS CODE REDEEMED!"
+  },
+  GIVEMEEVERYTHINGPLEASE: {
+    unlockAll: true,
+    sound: "buy",
+    message: "ALL SHOP ITEMS UNLOCKED!"
+  }
+};
   const TOTAL_CARDS = 8;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
