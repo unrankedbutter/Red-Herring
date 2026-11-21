@@ -46,12 +46,12 @@ const CODES = {
     sound: "coin",
     message: (granted) => "+" + granted + " FISH · RELEASE CODE REDEEMED!"
   },
-  TESTUSES: {
+  FIFTYFIFTY: {
     once: true,
-    uses: 1,
+    uses: 50,
     fish: 175,
     sound: "coin",
-    message: (granted) => "+" + granted + " FISH · TESTUSES CODE REDEEMED!"
+    message: (granted) => "+" + granted + " FISH · FIFTYFIFTY CODE REDEEMED!"
   },
   BONUS: {
     once: true,
