@@ -49,7 +49,7 @@ const CODES = {
   FIFTYFIFTY: {
     once: true,
     uses: 50,
-    fish: 175,
+    fish: 50,
     sound: "coin",
     message: (granted) => "+" + granted + " FISH · FIFTYFIFTY CODE REDEEMED!"
   },
