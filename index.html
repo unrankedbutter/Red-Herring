@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>RED HERRING — daily pixel mystery</title>
+  <meta name="description" content="Eight clue cards. Three lies. One answer. One round a day." />
+  <meta name="theme-color" content="#0b0f14" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <!-- Local CSS gets a fresh query on every load, so GitHub Pages cache never
+       serves an old stylesheet after an edit. No manual version numbers. -->
+  <script>
+    (function () {
+      var link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "styles.css?v=" + Date.now();
+      document.head.appendChild(link);
+    })();
+  </script>
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- ================= MENU ================= -->
+    <section id="screen-menu" class="screen is-active" aria-label="Main menu">
+      <div class="menu-frame">
+        <div class="menu-grid" aria-hidden="true"></div>
+
+        <!-- fish are spawned randomly here by app.js -->
+        <div id="fish-layer" class="fish-layer" aria-hidden="true"></div>
+
+        <div class="menu-content">
+          <h1 class="logo"><span>RED</span><span>HERRING</span></h1>
+
+          <div class="menu-stats" aria-label="Your daily stats">
+            <div><span>STREAK</span><strong id="menu-streak">0</strong></div>
+            <div><span>PLAYED</span><strong id="menu-played">0</strong></div>
+            <div><span>WIN RATE</span><strong id="menu-rate">0%</strong></div>
+            <div><span>BEST</span><strong id="menu-best">0</strong></div>
+          </div>
+
+          <div class="round-chip">DAY <span id="menu-day">0</span></div>
+
+          <!-- two main actions -->
+          <nav class="menu-actions" aria-label="Main actions">
+            <button id="btn-play" class="menu-btn primary" type="button">
+              <svg class="btn-icon" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="5" y="4" width="3" height="16" fill="currentColor"/>
+                <rect x="8" y="7" width="3" height="10" fill="currentColor"/>
+                <rect x="11" y="9" width="3" height="6" fill="currentColor"/>
+                <rect x="14" y="11" width="3" height="2" fill="currentColor"/>
+              </svg>
+              <span id="play-label">PLAY TODAY</span>
+            </button>
+            <button id="btn-arcade" class="menu-btn arcade-btn locked" type="button" aria-disabled="true">
+              <svg class="btn-icon arcade-icon" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="2" y="7" width="20" height="12" fill="none" stroke="currentColor" stroke-width="2"/>
+                <rect x="5" y="10" width="3" height="3" fill="currentColor"/>
+                <rect x="10" y="10" width="3" height="3" fill="currentColor"/>
+                <rect x="15" y="10" width="3" height="3" fill="currentColor"/>
+                <rect x="6" y="15" width="12" height="2" fill="currentColor"/>
+                <rect x="3" y="4" width="3" height="3" fill="currentColor"/>
+                <rect x="18" y="4" width="3" height="3" fill="currentColor"/>
+              </svg>
+              <span id="arcade-label">ARCADE · LOCKED</span>
+              <svg class="arcade-lock" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">
+                <path d="M3 1h6v2h1v6H2V3h1V1zm1 2h4V2H4v1z" fill="currentColor"/>
+              </svg>
+            </button>
+            <button id="btn-settings" class="menu-btn" type="button">
+              <svg class="btn-icon gear-icon" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+                <!-- eight teeth -->
+                <rect x="6" y="1" width="4" height="3" fill="currentColor"/>
+                <rect x="6" y="12" width="4" height="3" fill="currentColor"/>
+                <rect x="1" y="6" width="3" height="4" fill="currentColor"/>
+                <rect x="12" y="6" width="3" height="4" fill="currentColor"/>
+                <rect x="2" y="2" width="3" height="3" fill="currentColor"/>
+                <rect x="11" y="2" width="3" height="3" fill="currentColor"/>
+                <rect x="2" y="11" width="3" height="3" fill="currentColor"/>
+                <rect x="11" y="11" width="3" height="3" fill="currentColor"/>
+                <!-- ring body (transparent 4x4 hub in the middle) -->
+                <rect x="4" y="3" width="8" height="3" fill="currentColor"/>
+                <rect x="4" y="10" width="8" height="3" fill="currentColor"/>
+                <rect x="3" y="4" width="3" height="8" fill="currentColor"/>
+                <rect x="10" y="4" width="3" height="8" fill="currentColor"/>
+                <!-- bolt highlight so the hub reads as a hole -->
+                <rect x="6" y="6" width="1" height="1" fill="currentColor" opacity=".55"/>
+              </svg>
+              <span>SETTINGS</span>
+            </button>
+          </nav>
+
+          <!-- three compact square tools -->
+          <nav class="menu-tools" aria-label="More options">
+            <button id="btn-rules" class="tool-btn tool-rules" type="button">
+              <svg class="tool-icon" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="5" y="2" width="10" height="3" fill="currentColor"/>
+                <rect x="13" y="5" width="3" height="5" fill="currentColor"/>
+                <rect x="10" y="10" width="3" height="3" fill="currentColor"/>
+                <rect x="10" y="15" width="3" height="3" fill="currentColor"/>
+              </svg>
+              <span>HOW TO PLAY</span>
+            </button>
+            <button id="btn-shop" class="tool-btn tool-shop" type="button">
+              <svg class="tool-icon" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="2" y="3" width="4" height="2" fill="currentColor"/>
+                <rect x="6" y="5" width="12" height="2" fill="currentColor"/>
+                <rect x="3" y="7" width="16" height="10" fill="currentColor"/>
+                <rect x="6" y="9" width="10" height="6" style="fill:var(--panel)"/>
+                <rect x="6" y="18" width="3" height="3" fill="currentColor"/>
+                <rect x="15" y="18" width="3" height="3" fill="currentColor"/>
+              </svg>
+              <span>SHOP</span>
+              <em id="shop-fish-badge" class="tool-badge">0</em>
+            </button>
+            <button id="btn-account" class="tool-btn tool-account" type="button">
+              <svg class="tool-icon" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true">
+                <rect x="8" y="2" width="8" height="8" fill="currentColor"/>
+                <rect x="6" y="10" width="12" height="4" fill="currentColor"/>
+                <rect x="3" y="14" width="18" height="7" fill="currentColor"/>
+              </svg>
+              <span>ACCOUNT</span>
+            </button>
+          </nav>
+
+          <p class="menu-foot">
+            ONE ROUND A DAY <span class="blink">·</span> RESETS AT MIDNIGHT<br />
+            <span id="fish-count">FISH BANK: 0</span> <span class="blink">·</span> <span id="account-mode">LOCAL MODE</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= GAME ================= -->
+    <section id="screen-game" class="screen" aria-label="Game">
+      <header class="game-top">
+        <button id="btn-back" class="px-btn small" type="button"><span class="mini-arrow">◀</span> MENU</button>
+        <span class="round-chip small"><span id="game-day-label">DAY</span> <span id="game-day">0</span></span>
+        <button id="btn-sound-game" class="icon-btn" type="button" aria-label="Toggle sound">♪</button>
+      </header>
+
+      <div class="hud">
+        <div class="hud-item"><span class="hud-label">SCORE</span><strong id="score">0</strong></div>
+        <div class="hud-item"><span class="hud-label">FLIPS</span><strong id="flipped-count">0/8</strong></div>
+        <div class="hud-item"><span class="hud-label">BURNED</span><strong id="burned-count">0</strong></div>
+        <div class="hud-item"><span class="hud-label">GUESSES</span><strong id="guess-count">0</strong></div>
+        <div class="hud-item"><span class="hud-label">BEST</span><strong id="best">0</strong></div>
+      </div>
+
+      <div class="message-bar"><span class="caret">▮</span><span id="message">FLIP A CARD TO BEGIN</span></div>
+
+      <div id="arcade-status" class="arcade-status" hidden>
+        <div id="round-twist" class="round-twist" hidden></div>
+
+        <div id="timer-bar" class="timer-bar" hidden role="timer" aria-live="off">
+          <div class="timer-head">
+            <span id="timer-label">TIME LEFT</span>
+            <strong id="timer-clock">0:00</strong>
+          </div>
+          <div class="timer-track"><div id="timer-fill" class="timer-fill"></div></div>
+          <div id="timer-warning" class="timer-warning">HURRY UP!</div>
+        </div>
+      </div>
+
+      <div id="deck" class="deck" aria-label="Clue cards"></div>
+
+      <form id="guess-form" class="guess-form">
+        <label for="guess">YOUR GUESS</label>
+        <div class="guess-row">
+          <input id="guess" type="text" autocomplete="off" spellcheck="false"
+                 placeholder="TYPE ANSWER..." maxlength="40" />
+          <button class="px-btn primary" type="submit">SUBMIT</button>
+        </div>
+      </form>
+
+      <button id="give-up" class="text-btn" type="button">GIVE UP & REVEAL</button>
+
+      <div class="game-foot"><span id="game-next-label">NEXT ROUND IN</span><span id="countdown" class="countdown">--:--:--</span></div>
+    </section>
+  </div>
+
+  <!-- ================= RESULT ================= -->
+  <div id="overlay-result" class="overlay" hidden>
+    <div class="panel result-panel" role="dialog" aria-modal="true" aria-labelledby="result-banner">
+      <button class="panel-x" type="button" data-close="result" aria-label="Close result"><span class="x-glyph">✕</span></button>
+      <div id="result-banner" class="result-banner">CORRECT!</div>
+      <p class="kicker">THE ANSWER WAS</p>
+      <h2 id="result-answer" class="result-answer">—</h2>
+      <div class="score-box"><span id="result-score">0</span><small>PTS</small></div>
+      <ul id="result-breakdown" class="breakdown"></ul>
+      <div id="result-cells" class="result-cells" aria-hidden="true"></div>
+      <p id="result-fish" class="result-fish">+0 FISH EARNED</p>
+      <div class="panel-actions">
+        <button id="share" class="px-btn primary" type="button">
+          <svg class="btn-icon" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true">
+            <rect x="8" y="3" width="12" height="14" fill="none" stroke="currentColor" stroke-width="2"/>
+            <rect x="4" y="7" width="12" height="14" fill="none" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <span id="share-label">COPY RESULT</span>
+        </button>
+        <button id="result-menu" class="px-btn" type="button">MENU</button>
+        <button id="result-replay" class="px-btn" type="button" hidden>PLAY AGAIN</button>
+      </div>
+      <p class="next-up"><span id="result-next-label">NEXT ROUND IN</span> <strong id="result-countdown">--:--:--</strong></p>
+    </div>
+  </div>
+
+  <!-- ================= CARD ZOOM ================= -->
+  <div id="overlay-card" class="overlay card-zoom-overlay" hidden>
+    <div class="zoom-card" role="dialog" aria-modal="true" aria-label="Clue detail">
+      <button class="panel-x" type="button" data-close="card" aria-label="Close clue"><span class="x-glyph">✕</span></button>
+      <span id="zoom-num" class="zoom-num"></span>
+      <p id="zoom-text" class="zoom-text"></p>
+    </div>
+  </div>
+
+  <!-- ================= RULES ================= -->
+  <div id="overlay-rules" class="overlay" hidden>
+    <div class="panel rules-panel" role="dialog" aria-modal="true" aria-labelledby="rules-title">
+      <button class="panel-x" type="button" data-close="rules" aria-label="Close how to play"><span class="x-glyph">✕</span></button>
+      <p class="kicker">FIELD MANUAL</p>
+      <h2 id="rules-title">HOW TO PLAY</h2>
+      <ol>
+        <li>Each day deals <strong>8 clue cards</strong>. Five are true. Three are red herrings.</li>
+        <li>Flip cards to read clues. Tap a flipped card to enlarge it.</li>
+        <li>Flipped cards can be <strong>burned</strong> — the bottom burns away first.</li>
+        <li>Work out the 1–2 word answer and submit it. Correct = round over.</li>
+        <li>Earn <strong>12% of your final score</strong> in fish to spend in the shop.</li>
+      </ol>
+      <h3>SCORING</h3>
+      <ul id="rules-scoring" class="rules-scoring"></ul>
+      <p class="rules-note">Your score never drops below zero — not even mid-round.</p>
+    </div>
+  </div>
+
+  <!-- ================= SHOP ================= -->
+  <div id="overlay-shop" class="overlay" hidden>
+    <div class="panel shop-panel" role="dialog" aria-modal="true" aria-labelledby="shop-title">
+      <button class="panel-x" type="button" data-close="shop" aria-label="Close shop"><span class="x-glyph">✕</span></button>
+      <p class="kicker">THE BLACK MARKET</p>
+      <h2 id="shop-title">SHOP</h2>
+      <div class="wallet">
+        <span>YOUR FISH</span>
+        <strong id="shop-fish">0</strong>
+        <small>catch fish · earn 12% of your score</small>
+      </div>
+      <div id="dev-bar" class="dev-bar" hidden>
+        <span class="dev-title">DEV · FREE FISH</span>
+        <button class="dev-btn" type="button" data-dev="100">+100</button>
+        <button class="dev-btn" type="button" data-dev="1000">+1K</button>
+        <button class="dev-btn" type="button" data-dev="10000">+10K</button>
+        <button class="dev-btn wide" type="button" data-dev="all">UNLOCK ALL ITEMS</button>
+        <button class="dev-btn hide" type="button" data-dev="hide">HIDE</button>
+      </div>
+      <div id="shop-event-banner" class="shop-event-banner" hidden>
+        <span class="snow-glyph">❄</span> FESTIVE EVENT · LIMITED WINTER GEAR <span class="snow-glyph">❄</span>
+      </div>
+      <div class="tabs" id="shop-tabs">
+        <button class="tab active" type="button" data-tab="skin">CARD COLORS</button>
+        <button class="tab" type="button" data-tab="pattern">PATTERNS</button>
+        <button class="tab" type="button" data-tab="theme">THEMES</button>
+        <button class="tab event-tab" type="button" data-tab="event">EVENT</button>
+      </div>
+      <div id="shop-items" class="shop-sections"></div>
+      <div id="shop-snow" class="shop-snow" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <!-- ================= ARCADE ================= -->
+  <div id="overlay-arcade" class="overlay" hidden>
+    <div class="panel arcade-panel" role="dialog" aria-modal="true" aria-labelledby="arcade-title">
+      <button class="panel-x" type="button" data-close="arcade" aria-label="Close arcade"><span class="x-glyph">✕</span></button>
+      <p class="kicker">AFTER HOURS</p>
+      <h2 id="arcade-title">ARCADE</h2>
+      <p id="arcade-intro" class="arcade-intro">FINISH TODAY'S DAILY TO OPEN THE ARCADE. PICK A SECTION, THEN A MODE — MORE WRONG CLUES MEANS MORE FISH.</p>
+      <div id="arcade-sections" class="arcade-sections"></div>
+      <p id="arcade-mode-title" class="arcade-mode-title" hidden>PICK A DIFFICULTY</p>
+      <div id="arcade-modes" class="arcade-modes" hidden></div>
+      <div id="arcade-twists" class="arcade-modes" hidden></div>
+      <div id="arcade-practice" class="practice-setup" hidden>
+        <p class="practice-note">PRACTICE · NO FISH · NO DAILY STATS</p>
+        <div class="practice-fields">
+          <div class="form-field"><span>WORD</span><div id="practice-word" role="group" aria-label="Word"></div></div>
+          <div class="form-field"><span>TWIST</span><div id="practice-twist" role="group" aria-label="Twist"></div></div>
+          <div class="form-field"><span>DIFFICULTY</span><div id="practice-difficulty" role="group" aria-label="Difficulty"></div></div>
+        </div>
+        <button id="practice-start" class="px-btn primary" type="button">START PRACTICE</button>
+      </div>
+      <button id="arcade-back" class="px-btn arcade-back" type="button" hidden><span class="mini-arrow">◀</span> BACK TO SECTIONS</button>
+      <p class="arcade-note">EVERY MODE PAYS LESS THAN THE DAILY. ARCADE ROUNDS DON'T TOUCH YOUR DAILY STREAK.</p>
+    </div>
+  </div>
+
+  <!-- ================= ROUND INTRO ================= -->
+  <div id="overlay-intro" class="overlay intro-overlay" hidden>
+    <div id="intro-card" class="intro-card" role="dialog" aria-modal="true" aria-label="Round starting">
+      <button class="panel-x" type="button" data-close="intro" aria-label="Skip intro"><span class="x-glyph">✕</span></button>
+      <p id="intro-kicker" class="intro-kicker">ARCADE ROUND</p>
+      <div id="intro-icon" class="intro-icon" aria-hidden="true"></div>
+      <h2 id="intro-title" class="intro-title">MODE</h2>
+      <p id="intro-sub" class="intro-sub"></p>
+      <div id="intro-twist" class="intro-twist">
+        <span id="intro-twist-icon" class="intro-twist-icon" aria-hidden="true"></span>
+        <span class="intro-twist-copy">
+          <strong id="intro-twist-name">HOUSE RULE</strong>
+          <span id="intro-twist-desc"></span>
+        </span>
+      </div>
+      <div class="intro-ready"><span id="intro-count">5</span><small>SECONDS TO GET READY</small></div>
+      <div class="intro-track"><div id="intro-fill" class="intro-fill"></div></div>
+      <button id="intro-skip" class="px-btn small intro-skip" type="button">SKIP INTRO ▶</button>
+      <div id="intro-go" class="intro-go" aria-hidden="true">LET'S GO</div>
+    </div>
+  </div>
+
+  <!-- ================= SETTINGS ================= -->
+  <div id="overlay-settings" class="overlay" hidden>
+    <div class="panel settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <button class="panel-x" type="button" data-close="settings" aria-label="Close settings"><span class="x-glyph">✕</span></button>
+      <p class="kicker">CONTROL ROOM</p>
+      <h2 id="settings-title">SETTINGS</h2>
+      <div class="tabs" id="settings-tabs">
+        <button class="tab active" type="button" data-tab="basic">BASIC</button>
+        <button class="tab" type="button" data-tab="account">ACCOUNT</button>
+        <button class="tab" type="button" data-tab="codes">CODES</button>
+      </div>
+      <div id="settings-content" class="settings-content"></div>
+    </div>
+  </div>
+
+  <!-- ================= ACCOUNT ================= -->
+  <div id="overlay-account" class="overlay" hidden>
+    <div class="panel account-panel" role="dialog" aria-modal="true" aria-labelledby="account-title">
+      <button class="panel-x" type="button" data-close="account" aria-label="Close account"><span class="x-glyph">✕</span></button>
+      <p class="kicker">PLAYER PROFILE</p>
+      <h2 id="account-title">ACCOUNT</h2>
+      <div id="account-body" class="account-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Firebase compat SDK (optional: leave config blank for local mode) -->
+  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore-compat.js"></script>
+
+  <!-- Load local game files with a fresh query every time. Edit app.js on
+       GitHub and reload: no ?v=2, no hard refresh, no waiting for the CDN. -->
+  <script>
+    (function () {
+      var v = Date.now();
+      [
+        "config.js",
+        "fish-svg.js",
+        "shop-data.js",
+        "puzzles.js",
+        "engine.js",
+        "backend.js",
+        "app.js"
+      ].forEach(function (file) {
+        var s = document.createElement("script");
+        s.src = file + "?v=" + v;
+        s.async = false; // preserve the order of the old <script> tags
+        document.body.appendChild(s);
+      });
+    })();
+  </script>
+</body>
+</html>
