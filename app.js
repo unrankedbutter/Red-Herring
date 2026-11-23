@@ -2133,9 +2133,15 @@
     floatScore(E.RULES.flip + " PTS", rect.left + rect.width / 2, rect.top + 20, true);
     Sfx.play("flip");
     updateHUD();
-    setMessage(`CLUE ${i + 1} REVEALED — ` +
-      (roundTwist && roundTwist.noZoom ? "ZOOM IS LOCKED. " : "TAP IT TO ENLARGE. ") +
-      (roundTwist && roundTwist.noBurn ? "NO BURNING THIS ROUND." : "BURN ONLY IF SURE."), "");
+    const c = counts();
+    if (E.isFullReveal(c.flipped, puzzle.cards.length)) {
+      toast("FULL REVEAL · FISH PAYOUT −80%");
+      setMessage("ALL CARDS REVEALED — FISH PAYOUT IS CUT BY 80%.", "bad");
+    } else {
+      setMessage(`CLUE ${i + 1} REVEALED — ` +
+        (roundTwist && roundTwist.noZoom ? "ZOOM IS LOCKED. " : "TAP IT TO ENLARGE. ") +
+        (roundTwist && roundTwist.noBurn ? "NO BURNING THIS ROUND." : "BURN ONLY IF SURE."), "");
+    }
   }
 
   function burnCard(i) {
@@ -2195,12 +2201,14 @@
       ? E.ARCADE_MODES.find((m) => m.id === arcadeModeId) : null;
     const isPractice = currentMode === "arcade" && arcadeEvent === "practice";
     const twist = mode ? roundTwist : null;
-    const earned = isPractice
-      ? 0
-      : bonusFish(score * (mode ? mode.payout : 0.1) * (twist ? twist.payout : 1));
+    const fullReveal = E.isFullReveal(c.flipped, puzzle.cards.length);
+    const revealMultiplier = E.fishMultiplier(c.flipped, puzzle.cards.length);
+    const baseFish = score * (mode ? mode.payout : 0.1) * (twist ? twist.payout : 1);
+    const earned = isPractice ? 0 : bonusFish(baseFish * revealMultiplier);
 
     state.result = {
       day: puzzle.day, answer: puzzle.answer, correct, score, rawScore: raw, fishEarned: earned,
+      fullReveal, fishMultiplier: revealMultiplier,
       arcade: !!mode, practice: isPractice,
       modeName: mode ? ((puzzle.eventName ? puzzle.eventName + " · " : "") + mode.name) : null,
       twistName: twist && twist.id !== "standard" ? twist.name : null,
@@ -2275,7 +2283,8 @@
     el.resultFish.textContent = r.practice
       ? "PRACTICE · NO FISH EARNED" + (r.twistName ? " · " + r.twistName : "")
       : "+" + (r.fishEarned || 0) + " FISH EARNED" +
-        (r.twistName ? " · " + r.twistName : "");
+        (r.twistName ? " · " + r.twistName : "") +
+        (r.fullReveal ? " · FULL REVEAL: FISH −80%" : "");
 
     const rows = [];
     if (r.correct) rows.push(["CORRECT ANSWER", E.RULES.correctAnswer]);
