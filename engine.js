@@ -20,7 +20,10 @@
     burnHerring: 200,
     burnTrueClue: -150,
     wrongGuess: -50,
-    floorAtZero: true
+    floorAtZero: true,
+    // Flipping every card turns the board into an answer checker. Pay only a
+    // fifth of the normal fish for that round (an 80% cut).
+    fullRevealFishMultiplier: 0.2
   });
 
   // Arcade pays a fraction of your final score. Daily base is 0.10 (10%) and
@@ -407,6 +410,18 @@
     return score;
   }
 
+  // Revealing every card turns the board into an answer checker. Score points
+  // stay the same; only the fish payout is reduced.
+  function isFullReveal(flippedCount, cardCount) {
+    const flipped = Math.max(0, Number(flippedCount) || 0);
+    const total = Math.max(0, Number(cardCount) || 0);
+    return total > 0 && flipped >= total;
+  }
+
+  function fishMultiplier(flippedCount, cardCount) {
+    return isFullReveal(flippedCount, cardCount) ? RULES.fullRevealFishMultiplier : 1;
+  }
+
   function validateCatalog(catalog) {
     const errors = [];
     if (!Array.isArray(catalog)) return ["Catalog must be an array"];
@@ -459,6 +474,9 @@
       `🔥 ${r.herringsBurned}/${total} herrings burned · 💥 ${r.trueCluesBurned} true clue${r.trueCluesBurned === 1 ? "" : "s"} burned · 👁 ${r.flippedCount} flipped`
     ];
     if (r.twistName) lines.push(`🎲 HOUSE RULE · ${r.twistName}`);
+    if (r.fullReveal) lines.push(r.practice
+      ? "👁 FULL REVEAL"
+      : "👁 FULL REVEAL · FISH −80%");
     if (r.practice) lines.push("🏋 PRACTICE · NO FISH");
     return lines.join("\n");
   }
@@ -482,6 +500,8 @@
     buildDailyPuzzle,
     buildArcadePuzzle,
     scoreRound,
+    isFullReveal,
+    fishMultiplier,
     validateCatalog,
     shareText
   };
