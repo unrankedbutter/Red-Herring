@@ -2290,7 +2290,7 @@
     window.setTimeout(() => cardEls[i].classList.remove("just-flipped"), 320);
     if (!reduced) {
       cardEls[i].classList.add("flipping");
-      window.setTimeout(() => cardEls[i].classList.remove("flipping"), 300);
+      window.setTimeout(() => cardEls[i].classList.remove("flipping"), 320);
     }
     // FADE OUT: the clue is only readable for 3 seconds — then you rely on memory.
     if (roundTwist && roundTwist.fade) {
