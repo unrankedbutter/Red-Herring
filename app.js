@@ -2287,10 +2287,10 @@
     save();
     syncCard(i, false);
     cardEls[i].classList.add("just-flipped");
-    window.setTimeout(() => cardEls[i].classList.remove("just-flipped"), 320);
+    window.setTimeout(() => cardEls[i].classList.remove("just-flipped"), 360);
     if (!reduced) {
       cardEls[i].classList.add("flipping");
-      window.setTimeout(() => cardEls[i].classList.remove("flipping"), 320);
+      window.setTimeout(() => cardEls[i].classList.remove("flipping"), 360);
     }
     // FADE OUT: the clue is only readable for 3 seconds — then you rely on memory.
     if (roundTwist && roundTwist.fade) {
