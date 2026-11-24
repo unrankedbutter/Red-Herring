@@ -633,29 +633,22 @@ body:not([class*="theme-"]) .spark { display: none; }
 }
 .card.flipped .card-inner { transform: perspective(650px) rotateY(180deg); }
 
-/* REAL FLIP: the perspective() function makes one edge come toward you while
-   the other recedes, so this reads as a turning card instead of a flat squeeze.
-   A small tilt and lift during the turn adds depth; faces swap at 90°. */
+/* ONE CONTINUOUS FLIP: a single 0°→180° curve with no hold at 90°. The tilt,
+   lift and scale ride on separate transform properties so they can't stutter
+   the rotation. Backface-visibility swaps the faces naturally at the midpoint. */
 .card.flipping { z-index: 9; }
 .card.flipping .card-inner {
-  animation: cardFlip .32s cubic-bezier(.22, .78, .25, 1) both;
+  animation:
+    cardFlip .32s cubic-bezier(.22, .8, .25, 1) both,
+    flipBob .32s ease-out both;
 }
 @keyframes cardFlip {
-  0%   { transform: perspective(650px) rotateY(0deg) rotateX(0deg) rotateZ(0deg) translateY(0) scale(1); }
-  40%  { transform: perspective(650px) rotateY(76deg) rotateX(7deg) rotateZ(-3deg) translateY(-8px) scale(1.06); }
-  50%  { transform: perspective(650px) rotateY(94deg) rotateX(0deg) rotateZ(0deg) translateY(-10px) scale(1.08); }
-  60%  { transform: perspective(650px) rotateY(112deg) rotateX(-6deg) rotateZ(3deg) translateY(-8px) scale(1.06); }
-  100% { transform: perspective(650px) rotateY(180deg) rotateX(0deg) rotateZ(0deg) translateY(0) scale(1); }
+  from { transform: perspective(650px) rotateY(0deg); }
+  to   { transform: perspective(650px) rotateY(180deg); }
 }
-.card.flipping .card-back { animation: flipOutFace .32s linear both; }
-.card.flipping .card-front { animation: flipInFace .32s linear both; }
-@keyframes flipOutFace {
-  0%, 48%   { opacity: 1; }
-  52%, 100% { opacity: 0; }
-}
-@keyframes flipInFace {
-  0%, 48%   { opacity: 0; }
-  52%, 100% { opacity: 1; }
+@keyframes flipBob {
+  0%, 100% { translate: 0 0; rotate: 0deg; scale: 1; }
+  50%      { translate: 0 -9px; rotate: -2.5deg; scale: 1.07; }
 }
 .card.flipping::after {
   content: "";
@@ -673,8 +666,8 @@ body:not([class*="theme-"]) .spark { display: none; }
   animation: flipEdge .32s ease-out both;
 }
 @keyframes flipEdge {
-  0%, 100%  { opacity: 0; transform: translate(-50%, -50%) scaleY(.7); }
-  45%, 55%  { opacity: 1; transform: translate(-50%, -50%) scaleY(1); }
+  0%, 100% { opacity: 0; transform: translate(-50%, -50%) scaleY(.7); }
+  50%      { opacity: 1; transform: translate(-50%, -50%) scaleY(1); }
 }
 .card.flipping .card-front::after {
   content: "";
@@ -708,7 +701,7 @@ body:not([class*="theme-"]) .spark { display: none; }
   /* Hide the back halfway through the flip. Some mobile engines ignore
      backface-visibility on nested 3D layers, which left the fish painted over
      the clue. Visibility flips back instantly when the card is turned over. */
-  transition: border-color .2s ease, visibility 0s linear .12s;
+  transition: border-color .2s ease, visibility 0s linear .16s;
 }
 .card:not(.flipped) .card-back { visibility: visible; transition: border-color .2s ease, visibility 0s linear 0s; }
 .card.flipped .card-back { visibility: hidden; }
@@ -742,7 +735,7 @@ body:not([class*="theme-"]) .spark { display: none; }
 @keyframes fishBob { from { transform: translateY(-3px) rotate(-4deg); } to { transform: translateY(5px) rotate(4deg); } }
 /* Some mobile browsers leave the animated fish painted through the flipped
    face. Fade the back contents out near the end of the flip so it never lingers. */
-.flip-btn::before, .flip-btn .pixel-fish { transition: opacity .12s ease .1s; }
+.flip-btn::before, .flip-btn .pixel-fish { transition: opacity .12s ease .14s; }
 .card.flipped .flip-btn::before, .card.flipped .flip-btn .pixel-fish { opacity: 0; }
 .card-num { position: absolute; bottom: 9px; color: var(--amber); font-size: 9px; text-shadow: 2px 2px 0 #000, 0 0 10px rgba(var(--amber-rgb),.8); }
 
@@ -782,16 +775,11 @@ body:not([class*="theme-"]) .spark { display: none; }
 .burn-btn:hover { filter: brightness(1.15); transform: translateY(-2px); }
 .burn-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
 .burn-btn:disabled { opacity: .4; cursor: not-allowed; }
-.card.just-flipped:not(.flipping) .card-front { animation: revealPulse .3s var(--spring) 1; }
+.card.just-flipped .card-front { animation: revealPulse .26s var(--spring) .08s 1; }
 @keyframes revealPulse {
   0%   { filter: brightness(1.75) saturate(1.2); box-shadow: 0 0 38px rgba(var(--amber-rgb),.9), 0 6px 0 var(--line); }
   60%  { filter: brightness(1.1); box-shadow: 0 0 22px rgba(var(--amber-rgb),.55), 0 6px 0 var(--line); }
   100% { filter: none; box-shadow: 0 6px 0 var(--line), 0 0 26px rgba(var(--amber-rgb),.3); }
-}
-/* While the card is actually turning, run the face swap AND the landing pulse
-   together. Without this, the later just-flipped rule replaces flipInFace. */
-.card.flipping.just-flipped .card-front {
-  animation: flipInFace .32s linear both, revealPulse .3s var(--spring) .1s 1;
 }
 
 /* ---- burn effect: the card breaks into pixels, bottom row first ---- */
