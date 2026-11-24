@@ -278,9 +278,8 @@
       switch (name) {
         case "click": this.tone(660, 0.06, "square", 0, 0.035); break;
         case "flip":
-          this.tone(280, 0.09, "triangle", 0, 0.03, 760);
-          this.tone(880, 0.05, "square", 0.07, 0.026);
-          this.tone(1320, 0.04, "square", 0.12, 0.014);
+          this.tone(240, 0.05, "triangle", 0, 0.03, 900);
+          this.tone(1200, 0.035, "square", 0.045, 0.022);
           break;
         case "good": [523, 659, 784].forEach((f, i) => this.tone(f, 0.12, "square", i * 0.07)); break;
         case "bad": this.tone(180, 0.14, "sawtooth"); this.tone(110, 0.2, "sawtooth", 0.1); break;
@@ -2288,10 +2287,10 @@
     save();
     syncCard(i, false);
     cardEls[i].classList.add("just-flipped");
-    window.setTimeout(() => cardEls[i].classList.remove("just-flipped"), 620);
+    window.setTimeout(() => cardEls[i].classList.remove("just-flipped"), 320);
     if (!reduced) {
       cardEls[i].classList.add("flipping");
-      window.setTimeout(() => cardEls[i].classList.remove("flipping"), 740);
+      window.setTimeout(() => cardEls[i].classList.remove("flipping"), 300);
     }
     // FADE OUT: the clue is only readable for 3 seconds — then you rely on memory.
     if (roundTwist && roundTwist.fade) {
@@ -2306,7 +2305,7 @@
     const rect = cardEls[i].getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    burstAt(cx, cy, "#ffe08a", 8);
+    burstAt(cx, cy, "#ffe08a", 5);
     floatScore(E.RULES.flip + " PTS", cx, rect.top + 20, true);
     Sfx.play("flip");
     updateHUD();
