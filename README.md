@@ -34,16 +34,27 @@ Consecutive days never reuse the same answer.
 - **Main menu** — animated aurora, perspective grid, sparks, neon logo, and a
   daily stat bar (streak / played / win rate / best). Two main actions (PLAY,
   SETTINGS — with a detailed 8-tooth pixel cog that turns when you hover it), a
-  big **ARCADE** button underneath, and three compact tools, each with its own
-  theme-matched outline, text and icon color (HOW TO PLAY, SHOP, ACCOUNT). On
-  landscape phones the menu keeps that normal stacked layout, just scaled down
-  so the logo, stats, buttons and footer never overlap.
+  big **ARCADE** button underneath, and four compact tools, each with its own
+  theme-matched outline, text and icon color (HOW TO PLAY, SHOP, ACCOUNT, STATS).
+  On landscape phones the menu keeps that normal stacked layout, just scaled
+  down so the logo, stats, buttons and footer never overlap.
 - **Catchable fish** — detailed pixel herrings spawn randomly across the menu
   in both directions. Red = +1 fish (84%), gold = +3 (10%), blue = +10 (5%),
   and a rainbow gradient herring = +25 (1%). The counter persists, and
   milestones trigger toasts. Red keeps the plucky catch blip, while blue, gold
   and rainbow each have their own brighter chime so rare catches sound distinct.
-  A transparent PNG of the normal red fish is included as `red-fish.png`.
+  A transparent PNG of the normal red fish is included as `red-fish.png`, and
+  `favicon-512.png` is the browser tab / home-screen icon.
+- **Game feel** — cards lift, tilt, catch the light and spring over on flip;
+  burning a red herring gets a green-gold pixel burst, CLEAN BURN stamp and its
+  own chime, while a real clue keeps the red mistake feedback. The answer gets
+  a full-screen arcade slam before the result panel, where a ray burst, staggered
+  clue cells and swimming fish animate the reward. All of it respects the
+  system reduced-motion setting.
+- **Statistics** — the STATS tool opens a career screen with daily plays, win
+  rate, streak, best/average score, average fish, a score-trend chart and a log
+  of the last 20 finished dailies. The log is capped at 150 rounds and syncs
+  with the rest of the profile; arcade and PRACTICE never affect it.
 - **Economy** — earn fish by catching them and by finishing rounds: you receive
   **12% of your final score** in fish after a global **+20% fish bonus**.
   Flipping every card flags a full reveal and cuts that round's fish by **80%**
@@ -349,8 +360,9 @@ normal reloads always fetch your latest code.
 
 ## Storage
 
-`localStorage` keys under `red-herring:v1:*` hold today's board, stats, sound
-preference, fish count, local accounts/session, and a cache of cloud data.
+`localStorage` keys under `red-herring:v1:*` hold today's board, stats (including
+the bounded daily-results history used by the STATS screen), sound preference,
+fish count, local accounts/session, and a cache of cloud data.
 Signed-in profiles are stored in Firestore at `users/{uid}`. Code redemptions
 are stored at `codeUses/{code}` with one `claims/{claimId}` document per use.
 
@@ -394,8 +406,9 @@ node --test tests/engine.test.js
 ## Files
 
 ```
-index.html      menu, game, and all overlays
+index.html      menu, game, all overlays, cache-busted assets, tab icon
 styles.css      pixel theme, animations, themes, card colors, responsive layout
+favicon-512.png browser tab and home-screen icon
 config.js       Firebase config (fill this in for real accounts)
 backend.js      Firebase auth/data with local fallback
 fish-svg.js     detailed pixel fish generator
