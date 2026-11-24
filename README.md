@@ -45,7 +45,7 @@ Consecutive days never reuse the same answer.
   and rainbow each have their own brighter chime so rare catches sound distinct.
   A transparent PNG of the normal red fish is included as `red-fish.png`, and
   `favicon-512.png` is the browser tab / home-screen icon.
-- **Game feel** — cards snap over in a quick 3D turn with a tiny lift and glare;
+- **Game feel** — cards make a real quick 3D flip with a visible card edge and glare;
   burning a red herring gets a green-gold pixel burst, CLEAN BURN stamp and its
   own chime, while a real clue keeps the red mistake feedback. The answer gets
   a full-screen arcade slam before the result panel, where a ray burst, staggered
