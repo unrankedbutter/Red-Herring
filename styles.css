@@ -628,34 +628,32 @@ body:not([class*="theme-"]) .spark { display: none; }
   inset: 0;
   transform-style: preserve-3d;
   transform-origin: 50% 50%;
-  /* Overshoot very slightly, then settle — the flip should feel like a card
-     snapping shut in your hand, not a flat crossfade. */
-  transition: transform .68s cubic-bezier(.18, 1.22, .32, 1);
+  /* Short, punchy turn. The overshoot is tiny and the whole flip is over in
+     about a quarter-second — no slow floaty lift. */
+  transition: transform .24s cubic-bezier(.2, .85, .25, 1.18);
   will-change: transform;
 }
 .card.flipped .card-inner { transform: rotateY(180deg); }
-/* A quick lift and tilt rides on top of the 3D turn. The card briefly leaves
-   the deck, catches the light, then lands with a springy bounce. */
-.card.flipping { z-index: 9; animation: flipLift .72s var(--spring); }
-@keyframes flipLift {
+/* A small snap rides on the turn: quick lift, tiny tilt, immediate landing. */
+.card.flipping { z-index: 9; animation: flipSnap .28s ease-out; }
+@keyframes flipSnap {
   0%   { transform: translateY(0) scale(1) rotateZ(0); }
-  32%  { transform: translateY(-16px) scale(1.07) rotateZ(-2deg); }
-  68%  { transform: translateY(-5px) scale(1.02) rotateZ(1deg); }
+  40%  { transform: translateY(-6px) scale(1.045) rotateZ(-1deg); }
   100% { transform: translateY(0) scale(1) rotateZ(0); }
 }
 .card.flipping .card-front::after {
   content: "";
   position: absolute;
-  inset: -20%;
+  inset: -8%;
   z-index: 2;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(255,255,255,.85) 0%, rgba(255,224,138,.35) 35%, transparent 70%);
-  animation: flipGlare .7s ease-out forwards;
+  background: radial-gradient(circle, rgba(255,255,255,.7) 0%, rgba(255,224,138,.3) 40%, transparent 72%);
+  animation: flipGlare .26s ease-out forwards;
 }
 @keyframes flipGlare {
-  0%   { opacity: 0; transform: scale(.4); }
-  35%  { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.5); }
+  0%   { opacity: 0; transform: scale(.8); }
+  45%  { opacity: .85; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.15); }
 }
 
 .card-face {
@@ -675,7 +673,7 @@ body:not([class*="theme-"]) .spark { display: none; }
   /* Hide the back halfway through the flip. Some mobile engines ignore
      backface-visibility on nested 3D layers, which left the fish painted over
      the clue. Visibility flips back instantly when the card is turned over. */
-  transition: border-color .2s ease, visibility 0s linear .31s;
+  transition: border-color .2s ease, visibility 0s linear .12s;
 }
 .card:not(.flipped) .card-back { visibility: visible; transition: border-color .2s ease, visibility 0s linear 0s; }
 .card.flipped .card-back { visibility: hidden; }
@@ -709,7 +707,7 @@ body:not([class*="theme-"]) .spark { display: none; }
 @keyframes fishBob { from { transform: translateY(-3px) rotate(-4deg); } to { transform: translateY(5px) rotate(4deg); } }
 /* Some mobile browsers leave the animated fish painted through the flipped
    face. Fade the back contents out near the end of the flip so it never lingers. */
-.flip-btn::before, .flip-btn .pixel-fish { transition: opacity .2s ease .3s; }
+.flip-btn::before, .flip-btn .pixel-fish { transition: opacity .12s ease .1s; }
 .card.flipped .flip-btn::before, .card.flipped .flip-btn .pixel-fish { opacity: 0; }
 .card-num { position: absolute; bottom: 9px; color: var(--amber); font-size: 9px; text-shadow: 2px 2px 0 #000, 0 0 10px rgba(var(--amber-rgb),.8); }
 
@@ -749,10 +747,10 @@ body:not([class*="theme-"]) .spark { display: none; }
 .burn-btn:hover { filter: brightness(1.15); transform: translateY(-2px); }
 .burn-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
 .burn-btn:disabled { opacity: .4; cursor: not-allowed; }
-.card.just-flipped .card-front { animation: revealPulse .62s var(--spring) 1; }
+.card.just-flipped .card-front { animation: revealPulse .3s var(--spring) 1; }
 @keyframes revealPulse {
-  0%   { filter: brightness(1.9) saturate(1.3); box-shadow: 0 0 52px rgba(var(--amber-rgb),.95), 0 6px 0 var(--line); }
-  45%  { filter: brightness(1.25); box-shadow: 0 0 30px rgba(var(--amber-rgb),.65), 0 6px 0 var(--line); }
+  0%   { filter: brightness(1.75) saturate(1.2); box-shadow: 0 0 38px rgba(var(--amber-rgb),.9), 0 6px 0 var(--line); }
+  60%  { filter: brightness(1.1); box-shadow: 0 0 22px rgba(var(--amber-rgb),.55), 0 6px 0 var(--line); }
   100% { filter: none; box-shadow: 0 6px 0 var(--line), 0 0 26px rgba(var(--amber-rgb),.3); }
 }
 
