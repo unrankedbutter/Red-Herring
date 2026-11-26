@@ -51,6 +51,11 @@ Consecutive days never reuse the same answer.
   a full-screen arcade slam before the result panel, where a ray burst, staggered
   clue cells and swimming fish animate the reward. All of it respects the
   system reduced-motion setting.
+- **Low power mode** — slower devices are detected automatically (or you can
+  toggle it in SETTINGS → BASIC). It skips the heavy decorative layers such as
+  blurred full-screen backdrops, moving card patterns and animated menu fish,
+  while keeping the flip, burn, reveal and reward feedback. The setting is
+  device-local so it never changes your account or daily puzzle.
 - **Statistics** — the STATS tool opens a career screen with daily plays, win
   rate, streak, best/average score, average fish, a score-trend chart and a log
   of the last 20 finished dailies. The log is capped at 150 rounds and syncs
