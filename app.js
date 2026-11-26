@@ -23,6 +23,9 @@
   // Daily results kept for the statistics screen. Old rounds are dropped so a
   // long-lived cloud save never grows without bound.
   const HISTORY_LIMIT = 150;
+  // Device-local motion tier. Weak phones skip decorative effects; the core
+  // flip/reveal feedback stays intact. Saved value overrides auto-detection.
+  const PERF_KEY = "red-herring:v1:perf";
   // Add a code by adding one line to CODES below. Keys are uppercased for you.
   // once: true = one claim per profile/account. fish: N = exactly N fish.
   // uses: N = only N total claims worldwide. Omit it (or set unlimited: true)
@@ -64,7 +67,33 @@
     }
   };
   const TOTAL_CARDS = 8;
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reducedQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let reduced = reducedQuery.matches;
+  let perfOverride = null;
+  try {
+    const savedPerf = localStorage.getItem(PERF_KEY);
+    if (savedPerf === "on" || savedPerf === "off") perfOverride = savedPerf === "on";
+  } catch (_) { /* private mode */ }
+  function computeLowPower() {
+    if (perfOverride != null) return perfOverride;
+    const cores = navigator.hardwareConcurrency || 8;
+    const memory = navigator.deviceMemory || 8;
+    const saveData = navigator.connection && navigator.connection.saveData === true;
+    return reduced || saveData || cores <= 4 || memory <= 4;
+  }
+  let lowPower = computeLowPower();
+  let fishStarted = false;
+  function applyMotionMode() {
+    document.body.classList.toggle("low-power", lowPower);
+  }
+  if (reducedQuery.addEventListener) {
+    reducedQuery.addEventListener("change", (event) => {
+      reduced = event.matches;
+      lowPower = computeLowPower();
+      applyMotionMode();
+      if (!lowPower && el.menu.classList.contains("is-active")) startFish();
+    });
+  }
 
   // Backend fallback keeps the game playable if backend.js fails to load.
   const B = window.RedHerringBackend || (function () {
@@ -192,6 +221,12 @@
   const patternIds = shopItems.filter((item) => item.type === "pattern").map((item) => item.id);
   const pad = (n) => String(n).padStart(2, "0");
   const signed = (n) => (n > 0 ? "+" : "") + n;
+  // Repeated DOM text writes are a common source of mobile jank; skip no-ops.
+  const setText = (node, value) => {
+    if (!node) return;
+    const text = String(value);
+    if (node.textContent !== text) node.textContent = text;
+  };
   const esc = (value) => String(value == null ? "" : value)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -719,19 +754,24 @@
   function burstAt(x, y, color, count) {
     if (reduced) return;
     const colors = [color, "#ff2fb3", "#35f0ff", "#ffd166", "#63f5a8"];
-    for (let i = 0; i < (count || 12); i++) {
+    const n = Math.max(1, Math.min(lowPower ? 8 : 24, Number(count) || 12));
+    const fragment = document.createDocumentFragment();
+    const particles = [];
+    for (let i = 0; i < n; i++) {
       const p = document.createElement("span");
       p.className = "burst";
       p.style.left = x + "px";
       p.style.top = y + "px";
-      const angle = (Math.PI * 2 * i) / (count || 12);
+      const angle = (Math.PI * 2 * i) / n;
       const dist = 40 + Math.random() * 70;
       p.style.setProperty("--bx", `${Math.cos(angle) * dist}px`);
       p.style.setProperty("--by", `${Math.sin(angle) * dist}px`);
       p.style.setProperty("--c", colors[i % colors.length]);
-      document.body.appendChild(p);
-      window.setTimeout(() => p.remove(), 650);
+      fragment.appendChild(p);
+      particles.push(p);
     }
+    document.body.appendChild(fragment);
+    window.setTimeout(() => particles.forEach((p) => p.remove()), 650);
   }
 
   function burnFX(cardNode, kind) {
@@ -739,11 +779,12 @@
     const fx = document.createElement("div");
     fx.className = "burn-fx pixel-burn" + (kind ? " " + kind : "");
     fx.setAttribute("aria-hidden", "true");
-    const cols = 9;
-    const rows = 10;
+    const cols = lowPower ? 6 : 9;
+    const rows = lowPower ? 7 : 10;
     const colors = kind === "herring"
       ? ["var(--green)", "#ffe08a", "#ffffff", "#35f0ff"]
       : ["var(--pink)", "var(--amber)", "var(--cyan)", "#ffffff"];
+    const fragment = document.createDocumentFragment();
     for (let row = rows - 1; row >= 0; row--) {
       for (let col = 0; col < cols; col++) {
         const px = document.createElement("span");
@@ -755,9 +796,10 @@
         px.style.setProperty("--dy", `${Math.round(-18 - Math.random() * 54)}px`);
         px.style.setProperty("--r", `${Math.round(-180 + Math.random() * 360)}deg`);
         px.style.setProperty("--c", colors[(row + col) % colors.length]);
-        fx.appendChild(px);
+        fragment.appendChild(px);
       }
     }
+    fx.appendChild(fragment);
     cardNode.appendChild(fx);
   }
 
@@ -778,21 +820,24 @@
     if (reduced || !el.answerSlam) return;
     el.answerSlamText.textContent = String(answer || "").toUpperCase();
     el.answerSlam.className = "answer-slam " + (correct ? "good" : "bad");
-    void el.answerSlam.offsetWidth;
-    el.answerSlam.classList.add("show");
-    const r = el.answerSlam.getBoundingClientRect();
-    burstAt(r.left + r.width / 2, r.top + r.height / 2, correct ? "#ffe08a" : "#ff5577", 24);
+    // Next-frame restart avoids a forced layout flush at the reveal moment.
+    window.requestAnimationFrame(() => {
+      el.answerSlam.classList.add("show");
+      burstAt(window.innerWidth / 2, window.innerHeight / 2,
+        correct ? "#ffe08a" : "#ff5577", lowPower ? 8 : 24);
+    });
     window.setTimeout(() => el.answerSlam.classList.remove("show"), 800);
   }
 
   function fishRewardFX(amount) {
     if (reduced || !el.fishReward || !(amount > 0)) return;
-    const count = Math.max(3, Math.min(9, Math.ceil(amount / 8) + 2));
+    const count = lowPower ? 3 : Math.max(3, Math.min(9, Math.ceil(amount / 8) + 2));
+    const svg = fishSVG();
     let markup = "";
     for (let i = 0; i < count; i++) {
       const delay = (i * 0.085).toFixed(3);
       const drift = -150 + Math.round((300 / Math.max(1, count - 1)) * i);
-      markup += '<span class="reward-fish" style="--i:' + delay + 's;--drift:' + drift + 'px">' + fishSVG() + '</span>';
+      markup += '<span class="reward-fish" style="--i:' + delay + 's;--drift:' + drift + 'px">' + svg + '</span>';
     }
     markup += '<span class="reward-coin">+' + amount + ' FISH</span>';
     el.fishReward.innerHTML = markup;
@@ -804,12 +849,18 @@
   function rearrange(before) {
     if (!before || reduced) return;
     window.requestAnimationFrame(() => {
+      const moves = [];
       before.forEach((rect, node) => {
         if (node.classList.contains("gone")) return;
         const now = node.getBoundingClientRect();
         const dx = rect.left - now.left;
         const dy = rect.top - now.top;
         if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+        moves.push({ node, dx, dy });
+      });
+      // All reads happen before any .animate() write, so the browser does not
+      // have to re-layout between cards.
+      moves.forEach(({ node, dx, dy }) => {
         node.animate(
           [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "translate(0,0)" }],
           { duration: 460, easing: "cubic-bezier(.22,1,.36,1)" }
@@ -821,6 +872,7 @@
   function buildMenuParticles() {
     if (reduced) return;
     const host = document.querySelector(".menu-frame");
+    if (!host || lowPower) return;
     const colors = ["var(--pink)", "var(--cyan)", "var(--amber)", "var(--purple)", "var(--ink)"];
     for (let i = 0; i < 20; i++) {
       const p = document.createElement("span");
@@ -845,40 +897,29 @@
     return "red";
   }
 
-  function fishHasExited(fish) {
-    if (!fish || !el.fishLayer) return false;
-    const layer = el.fishLayer.getBoundingClientRect();
-    const body = fish.getBoundingClientRect();
-    // Only the far edge counts. A fish starting just off the entry edge is not "gone".
-    if (fish.dataset.dir === "left") return body.right <= layer.left + 1;
-    return body.left >= layer.right - 1;
-  }
-
   function retireFish(fish, delay) {
     if (!fish || fish.dataset.retired === "1") return;
     fish.dataset.retired = "1";
-    if (fish._raf) window.cancelAnimationFrame(fish._raf);
     window.clearTimeout(fish._timer);
-    window.setTimeout(() => {
+    fish._removeTimer = window.setTimeout(() => {
       fish.remove();
-      spawnFish();
+      // Never keep decorating a hidden/off-power screen in the background.
+      if (!reduced && !lowPower && !document.hidden && el.menu.classList.contains("is-active")) spawnFish();
     }, delay || 0);
   }
 
-  function trackFishExit(fish) {
-    const check = () => {
-      if (fish.dataset.caught === "1" || fish.dataset.retired === "1") return;
-      if (fishHasExited(fish)) {
-        retireFish(fish, 0);
-        return;
-      }
-      fish._raf = window.requestAnimationFrame(check);
-    };
-    fish._raf = window.requestAnimationFrame(check);
+  function clearFish() {
+    fishStarted = false;
+    if (!el.fishLayer) return;
+    Array.prototype.forEach.call(el.fishLayer.children, (fish) => {
+      window.clearTimeout(fish._timer);
+      window.clearTimeout(fish._removeTimer);
+      fish.remove();
+    });
   }
 
   function spawnFish() {
-    if (!el.fishLayer) return;
+    if (!el.fishLayer || reduced || lowPower || document.hidden || !el.menu.classList.contains("is-active")) return;
     const type = pickFishType();
     const info = FISH_TYPES[type];
     const dir = Math.random() < 0.5 ? "right" : "left";
@@ -901,16 +942,22 @@
     fish.innerHTML = '<span class="fish-inner"><span class="fish-face">' + FISH_SVG(type) + '</span></span>';
     el.fishLayer.appendChild(fish);
 
-    trackFishExit(fish);
+    // One timeout replaces a per-frame getBoundingClientRect() poll. The
+    // negative CSS delay already accounts for how far into the swim we start.
+    fish._timer = window.setTimeout(() => {
+      if (fish.dataset.caught !== "1" && fish.dataset.retired !== "1") retireFish(fish, 0);
+    }, Math.max(0, (swim + delay) * 1000) + 120);
     fish.addEventListener("animationend", (event) => {
       if (event.animationName !== "fishRight" && event.animationName !== "fishLeft") return;
-      if (fish.dataset.caught === "1") return;
-      if (fishHasExited(fish)) retireFish(fish, 0);
+      if (fish.dataset.caught !== "1") retireFish(fish, 0);
     });
     fish.addEventListener("click", () => catchFish(fish));
   }
 
   function startFish() {
+    if (fishStarted || reduced || lowPower || !el.fishLayer || document.hidden ||
+        !el.menu.classList.contains("is-active")) return;
+    fishStarted = true;
     [0, 900, 2100, 3400].forEach((delay) => window.setTimeout(spawnFish, delay));
   }
 
@@ -1301,6 +1348,11 @@
       '<button class="px-btn" type="button" data-action="toggle-sound" style="width:100%;margin-top:4px">' +
         (soundOn ? "TURN SOUND OFF" : "TURN SOUND ON") +
       '</button>' +
+      '<div class="settings-row"><span>LOW POWER MODE</span><strong>' + (lowPower ? "ON" : "OFF") + '</strong></div>' +
+      '<button class="px-btn" type="button" data-action="toggle-perf" style="width:100%;margin-top:4px">' +
+        (lowPower ? "TURN LOW POWER OFF" : "TURN LOW POWER ON") +
+      '</button>' +
+      '<p class="account-note">SKIPS HEAVY DECORATIVE EFFECTS ON SLOWER DEVICES. THE GAME ITSELF IS UNCHANGED.</p>' +
       '<div class="settings-row"><span>FISH BANK</span><strong>' + accountData.fish + '</strong></div>' +
       '<div class="settings-row"><span>STREAK</span><strong>' + (stats.streak || 0) + '</strong></div>' +
       '<div class="settings-row"><span>MODE</span><strong>' + (B.mode === "cloud" ? "CLOUD" : "LOCAL") + '</strong></div>';
@@ -1633,10 +1685,10 @@
       if (!introActive) return;
       const leftMs = Math.max(0, introEndsAt - Date.now());
       el.introFill.style.transform = "scaleX(" + (leftMs / INTRO_MS).toFixed(4) + ")";
-      el.introCount.textContent = String(Math.ceil(leftMs / 1000));
+      setText(el.introCount, Math.ceil(leftMs / 1000));
       if (leftMs <= 0) dismissRoundIntro();
     };
-    introTimer = window.setInterval(frame, 60);
+    introTimer = window.setInterval(frame, 120);
   }
 
   function renderArcadeSections() {
@@ -2207,6 +2259,8 @@
     el.game.classList.toggle("is-active", name === "game");
     el.menu.scrollTop = 0;
     el.game.scrollTop = 0;
+    if (name === "menu") startFish();
+    else clearFish();
   }
 
   function openOverlay(node) { node.hidden = false; }
@@ -2215,8 +2269,10 @@
   function updateHUD() {
     const c = counts();
     const oldScore = el.score.textContent;
-    el.score.textContent = String(liveScore());
-    if (String(liveScore()) !== oldScore) bump(el.score);
+    const score = liveScore();
+    const scoreText = String(score);
+    setText(el.score, scoreText);
+    if (scoreText !== oldScore) bump(el.score);
     el.flipped.textContent = `${c.flipped}/${puzzle.cards.length}`;
     el.burned.textContent = String(c.herrings + c.truths);
     el.guesses.textContent = String(state.wrongGuesses);
@@ -2406,11 +2462,13 @@
     save();
     markDailyDone();
 
+    // One data patch means one persistence write and one UI refresh. Chained
+    // updateData() calls used to re-sanitize history and re-render twice here.
+    const patch = {};
     if (!isPractice) {
-      const current = normalizeData(B.getData());
-      B.updateData({ fish: current.fish + earned, fishCaught: current.fishCaught });
-      syncFishCount();
-      if (earned > 0) bump(el.fishCount);
+      const current = B.getData();
+      patch.fish = current.fish + earned;
+      patch.fishCaught = current.fishCaught;
     }
 
     // Arcade rounds never touch daily streak/stats; PRACTICE also pays no fish.
@@ -2446,9 +2504,13 @@
       nextStats.totalScore = (stats.totalScore || 0) + score;
       nextStats.lastPlayed = today;
       stats = nextStats;
-      saveStats(nextStats);
+      patch.stats = nextStats;
+      store.set(STATS_KEY, JSON.stringify(nextStats));
       updateMenuStats();
     }
+
+    if (Object.keys(patch).length) B.updateData(patch);
+    if (!isPractice && earned > 0) bump(el.fishCount);
 
     if (correct) flashScreen("good");
     else flashScreen("bad");
@@ -2578,6 +2640,7 @@
   }
 
   function tick() {
+    if (document.hidden) return;
     const now = new Date();
     const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const diff = Math.max(0, Math.floor((next - now) / 1000));
@@ -2590,23 +2653,23 @@
       const msLeft = introActive ? roundDuration * 1000 : Math.max(0, roundDeadline - Date.now());
       const left = introActive ? roundDuration : Math.ceil(msLeft / 1000);
       const clock = `${pad(Math.floor(left / 60))}:${pad(left % 60)}`;
-      el.gameNextLabel.textContent = "TIME LEFT";
-      el.countdown.textContent = clock;
+      setText(el.gameNextLabel, "TIME LEFT");
+      setText(el.countdown, clock);
       el.countdown.classList.toggle("urgent", left <= 10);
 
       // Fill bar tracks the remaining fraction smoothly between ticks.
       const ratio = roundDuration ? Math.max(0, Math.min(1, msLeft / (roundDuration * 1000))) : 0;
       el.timerFill.style.transform = "scaleX(" + ratio.toFixed(4) + ")";
-      el.timerClock.textContent = clock;
+      setText(el.timerClock, clock);
       el.timerBar.classList.toggle("warn", left <= Math.max(15, roundDuration * 0.4));
       el.timerBar.classList.toggle("danger", left <= 10);
       el.timerBar.classList.toggle("critical", left <= 5);
       el.game.classList.toggle("timer-hot", left <= 10);
       el.game.classList.toggle("timer-critical", left <= 5);
-      if (left <= 5) el.timerWarning.textContent = "FINAL SECONDS!";
-      else if (left <= 10) el.timerWarning.textContent = "HURRY UP!";
-      else if (left <= Math.max(15, roundDuration * 0.4)) el.timerWarning.textContent = "PICK UP THE PACE";
-      else el.timerWarning.textContent = "THINK FAST";
+      if (left <= 5) setText(el.timerWarning, "FINAL SECONDS!");
+      else if (left <= 10) setText(el.timerWarning, "HURRY UP!");
+      else if (left <= Math.max(15, roundDuration * 0.4)) setText(el.timerWarning, "PICK UP THE PACE");
+      else setText(el.timerWarning, "THINK FAST");
 
       // One beep per second in the danger zone, rising in pitch near zero.
       if (!introActive && left !== lastTimerSecond) {
@@ -2626,14 +2689,14 @@
       }
     } else {
       el.countdown.classList.remove("urgent");
-      el.gameNextLabel.textContent = arcade ? "ARCADE ·" : devUnlocked ? "DEV MODE ·" : "NEXT ROUND IN";
-      el.countdown.textContent = arcade ? "INSTANT REPLAY" : devUnlocked ? "NO COOLDOWN" : text;
+      setText(el.gameNextLabel, arcade ? "ARCADE ·" : devUnlocked ? "DEV MODE ·" : "NEXT ROUND IN");
+      setText(el.countdown, arcade ? "INSTANT REPLAY" : devUnlocked ? "NO COOLDOWN" : text);
     }
 
     const r = state.result;
     const endReason = r && (r.timedOut ? "TIME'S UP" : r.allBurned ? "NO CLUES LEFT" : r.oneStrike ? "ONE STRIKE" : null);
-    el.resultNextLabel.textContent = arcade ? "ARCADE ·" : "NEXT ROUND IN";
-    el.resultCountdown.textContent = endReason || (arcade ? "INSTANT REPLAY" : text);
+    setText(el.resultNextLabel, arcade ? "ARCADE ·" : "NEXT ROUND IN");
+    setText(el.resultCountdown, endReason || (arcade ? "INSTANT REPLAY" : text));
     if (E.localDateString() !== today) window.location.reload();
   }
 
@@ -2765,6 +2828,18 @@
     const btn = event.target.closest("[data-action]");
     if (!btn || btn.disabled) return;
     if (btn.dataset.action === "toggle-sound") { Sfx.play("click"); toggleSound(); return; }
+    if (btn.dataset.action === "toggle-perf") {
+      perfOverride = !lowPower;
+      lowPower = perfOverride;
+      try { localStorage.setItem(PERF_KEY, perfOverride ? "on" : "off"); } catch (_) { /* private mode */ }
+      applyMotionMode();
+      if (lowPower) clearFish();
+      else if (el.menu.classList.contains("is-active")) startFish();
+      Sfx.play("click");
+      renderSettings("basic");
+      toast(lowPower ? "LOW POWER MODE ON" : "LOW POWER MODE OFF");
+      return;
+    }
     if (btn.dataset.action === "redeem-code") {
       if (codeBusy) return;
       const input = el.settingsContent.querySelector('.code-entry input[name="code"]');
@@ -2945,13 +3020,14 @@
     if (event.pointerType !== "mouse" || reduced) return;
     const card = event.target.closest(".card");
     if (!card || card.classList.contains("flipped") || card.classList.contains("burning")) return;
-    const r = card.getBoundingClientRect();
+    const r = card._hoverRect || (card._hoverRect = card.getBoundingClientRect());
     card.style.setProperty("--rx", `${(-(event.clientY - r.top) / r.height + 0.5) * 9}deg`);
     card.style.setProperty("--ry", `${((event.clientX - r.left) / r.width - 0.5) * 9}deg`);
   });
   el.deck.addEventListener("pointerout", (event) => {
     const card = event.target.closest(".card");
     if (!card) return;
+    if (!card.contains(event.relatedTarget)) card._hoverRect = null;
     card.style.setProperty("--rx", "0deg");
     card.style.setProperty("--ry", "0deg");
   });
@@ -3046,16 +3122,19 @@
   document.querySelectorAll(".panel-x .x-glyph").forEach((node) => { node.innerHTML = X_GLYPH; });
 
   /* ---------------- boot ---------------- */
+  applyMotionMode();
   updateDayLabels();
   if (state.result) el.playLabel.textContent = devUnlocked ? "PLAY AGAIN" : "VIEW RESULT";
   buildRules();
   buildMenuParticles();
+  startFish();
   renderDeck();
   applyData(accountData);
   updateHUD();
   tick();
   updateArcadeButton();
   window.setInterval(tick, 1000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
 
   B.onAuth((user) => {
     currentUser = user;
