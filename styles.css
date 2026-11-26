@@ -243,20 +243,20 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--cyan); outl
   content: "";
   position: absolute;
   z-index: -2;
-  inset: -45%;
+  inset: -24%;
   background:
-    radial-gradient(circle at 28% 32%, rgba(var(--menu-a),.42), transparent 42%),
-    radial-gradient(circle at 72% 38%, rgba(var(--menu-b),.3), transparent 42%),
-    radial-gradient(circle at 50% 80%, rgba(var(--menu-c),.45), transparent 50%);
-  filter: blur(36px);
-  animation: aurora 16s ease-in-out infinite alternate;
+    radial-gradient(circle at 28% 32%, rgba(var(--menu-a),.42), transparent 48%),
+    radial-gradient(circle at 72% 38%, rgba(var(--menu-b),.3), transparent 48%),
+    radial-gradient(circle at 50% 80%, rgba(var(--menu-c),.45), transparent 56%);
+  filter: blur(14px);
+  animation: aurora 22s ease-in-out infinite alternate;
 }
 @keyframes aurora {
   0% { transform: translate(-4%,-3%) rotate(0deg) scale(1); }
   100% { transform: translate(5%,4%) rotate(14deg) scale(1.13); }
 }
 /* Classic stays cheap-and-cheerful: quiet menu chrome, no paid-theme sparkle. */
-body:not([class*="theme-"]) .menu-frame::before { opacity: .22; filter: blur(18px); }
+body:not([class*="theme-"]) .menu-frame::before { opacity: .28; filter: blur(10px); }
 body:not([class*="theme-"]) .menu-grid { opacity: .4; }
 body:not([class*="theme-"]) .spark { display: none; }
 
@@ -265,17 +265,28 @@ body:not([class*="theme-"]) .spark { display: none; }
   z-index: -1;
   left: -60%; right: -60%; bottom: -26%;
   height: 68%;
-  background-image:
-    linear-gradient(rgba(var(--menu-b),.22) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(var(--menu-a),.18) 1px, transparent 1px);
-  background-size: 42px 42px;
+  overflow: hidden;
   transform: perspective(380px) rotateX(66deg);
   transform-origin: bottom center;
   -webkit-mask-image: linear-gradient(to top, #000 10%, transparent 85%);
   mask-image: linear-gradient(to top, #000 10%, transparent 85%);
-  animation: gridMove 3.2s linear infinite;
 }
-@keyframes gridMove { to { background-position: 0 42px, 0 0; } }
+/* Move the line layer with a transform instead of repainting background-position. */
+.menu-grid::before {
+  content: "";
+  position: absolute;
+  inset: -42px -10% 0;
+  background-image:
+    linear-gradient(rgba(var(--menu-b),.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--menu-a),.18) 1px, transparent 1px);
+  background-size: 42px 42px;
+  animation: gridMove 3.2s linear infinite;
+  will-change: transform;
+}
+@keyframes gridMove {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, 42px, 0); }
+}
 
 .spark {
   position: absolute;
@@ -302,7 +313,7 @@ body:not([class*="theme-"]) .spark { display: none; }
 .fish-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
 .menu-fish {
   position: absolute;
-  left: -20%;
+  left: 0;
   top: var(--top, 50%);
   width: var(--size, 60px);
   padding: 0;
@@ -311,13 +322,19 @@ body:not([class*="theme-"]) .spark { display: none; }
   cursor: pointer;
   pointer-events: auto;
   touch-action: manipulation;
-  filter: drop-shadow(0 0 9px var(--glow, currentColor));
+  filter: drop-shadow(0 0 6px var(--glow, currentColor));
   animation: fishRight var(--swim, 20s) linear var(--delay, 0s) forwards;
-  will-change: left;
+  will-change: transform;
 }
 .menu-fish[data-dir="left"] { animation-name: fishLeft; }
-@keyframes fishRight { from { left: -20%; } to { left: 120%; } }
-@keyframes fishLeft { from { left: 120%; } to { left: -20%; } }
+@keyframes fishRight {
+  from { transform: translate3d(-20vw, 0, 0); }
+  to   { transform: translate3d(120vw, 0, 0); }
+}
+@keyframes fishLeft {
+  from { transform: translate3d(120vw, 0, 0); }
+  to   { transform: translate3d(-20vw, 0, 0); }
+}
 .fish-inner { display: block; width: 100%; animation: fishWobble 1.7s ease-in-out infinite alternate; }
 @keyframes fishWobble {
   from { transform: translateY(-6px) rotate(-5deg); }
@@ -326,7 +343,7 @@ body:not([class*="theme-"]) .spark { display: none; }
 .fish-face { display: block; width: 100%; }
 .menu-fish[data-dir="left"] .fish-face { transform: scaleX(-1); }
 .menu-fish .pixel-fish { display: block; width: 100%; height: auto; pointer-events: none; }
-.menu-fish:hover { filter: drop-shadow(0 0 18px var(--glow, currentColor)) brightness(1.3); }
+.menu-fish:hover { filter: drop-shadow(0 0 10px var(--glow, currentColor)) brightness(1.15); }
 .menu-fish.caught {
   animation: fishCatch .45s var(--spring) forwards !important;
   pointer-events: none;
@@ -599,7 +616,6 @@ body:not([class*="theme-"]) .spark { display: none; }
   min-width: 0;
   max-width: 152px;
   aspect-ratio: 3 / 3.75;
-  transform-style: preserve-3d;
   opacity: 0;
   animation: deal .62s var(--ease) forwards;
   animation-delay: var(--deal, 0ms);
@@ -629,7 +645,6 @@ body:not([class*="theme-"]) .spark { display: none; }
   /* The end state still lives here; the flip itself is a keyframe animation
      below so the card visibly turns instead of crossfading. */
   transition: transform .18s var(--ease);
-  will-change: transform;
 }
 .card.flipped .card-inner { transform: perspective(650px) rotateY(180deg); }
 
@@ -638,6 +653,8 @@ body:not([class*="theme-"]) .spark { display: none; }
    the rotation. Backface-visibility swaps the faces naturally at the midpoint. */
 .card.flipping { z-index: 9; }
 .card.flipping .card-inner {
+  transition: none;
+  will-change: transform;
   animation:
     cardFlip .32s cubic-bezier(.22, .8, .25, 1) both,
     flipBob .32s ease-out both;
@@ -737,6 +754,7 @@ body:not([class*="theme-"]) .spark { display: none; }
    face. Fade the back contents out near the end of the flip so it never lingers. */
 .flip-btn::before, .flip-btn .pixel-fish { transition: opacity .12s ease .14s; }
 .card.flipped .flip-btn::before, .card.flipped .flip-btn .pixel-fish { opacity: 0; }
+.card.flipped .flip-btn .pixel-fish, .card.burning .flip-btn .pixel-fish { animation: none; }
 .card-num { position: absolute; bottom: 9px; color: var(--amber); font-size: 9px; text-shadow: 2px 2px 0 #000, 0 0 10px rgba(var(--amber-rgb),.8); }
 
 .card-front {
@@ -775,11 +793,10 @@ body:not([class*="theme-"]) .spark { display: none; }
 .burn-btn:hover { filter: brightness(1.15); transform: translateY(-2px); }
 .burn-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--line); }
 .burn-btn:disabled { opacity: .4; cursor: not-allowed; }
-.card.just-flipped .card-front { animation: revealPulse .26s var(--spring) .08s 1; }
+.card.just-flipped .card-front { animation: revealPulse .24s var(--ease) .16s 1; }
 @keyframes revealPulse {
-  0%   { filter: brightness(1.75) saturate(1.2); box-shadow: 0 0 38px rgba(var(--amber-rgb),.9), 0 6px 0 var(--line); }
-  60%  { filter: brightness(1.1); box-shadow: 0 0 22px rgba(var(--amber-rgb),.55), 0 6px 0 var(--line); }
-  100% { filter: none; box-shadow: 0 6px 0 var(--line), 0 0 26px rgba(var(--amber-rgb),.3); }
+  0%   { opacity: .62; box-shadow: 0 6px 0 var(--line), 0 0 30px rgba(var(--amber-rgb),.72); }
+  100% { opacity: 1; box-shadow: 0 6px 0 var(--line), 0 0 26px rgba(var(--amber-rgb),.3); }
 }
 
 /* ---- burn effect: the card breaks into pixels, bottom row first ---- */
@@ -913,6 +930,14 @@ body:not([class*="theme-"]) .spark { display: none; }
   animation: fadeIn .25s ease-out 1;
 }
 .overlay[hidden] { display: none; }
+/* Full-viewport blur is expensive while the board keeps animating underneath. */
+@media (max-width: 620px), (max-height: 620px), (hover: none) {
+  .overlay, .intro-overlay {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(5, 3, 12, .9);
+  }
+}
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* The split-second full-screen answer slam plays under the result overlay.
@@ -943,8 +968,8 @@ body:not([class*="theme-"]) .spark { display: none; }
 }
 .answer-slam.bad span { color: var(--red); text-shadow: 0 0 18px rgba(255,85,119,.9), 0 0 60px rgba(255,85,119,.5), 8px 9px 0 #000; }
 @keyframes slamOut {
-  0%   { opacity: 0; transform: scale(1.25); filter: blur(8px); }
-  18%  { opacity: 1; transform: scale(1); filter: blur(0); }
+  0%   { opacity: 0; transform: scale(1.25); }
+  18%  { opacity: 1; transform: scale(1); }
   62%  { opacity: 1; transform: scale(1.02); }
   100% { opacity: 0; transform: scale(1.08); }
 }
@@ -1412,7 +1437,7 @@ body:not([class*="theme-"]) .spark { display: none; }
 }
 .timer-bar.critical { --timer: var(--red); }
 .timer-bar.critical .timer-head strong { animation-duration: .28s; }
-@keyframes timerBeat { 50% { transform: scale(1.14); filter: brightness(1.4); } }
+@keyframes timerBeat { 50% { transform: scale(1.14); } }
 
 /* Christmas arcade: soft snow, a candy-cane rail, and festive status chips.
    It is scoped to the event so DEFAULT mode keeps its normal arcade look. */
@@ -1619,6 +1644,7 @@ body.arcade-christmas .result-panel {
   transform-origin: left center;
   background: var(--intro-accent);
   opacity: .75;
+  transition: transform .12s linear;
 }
 .intro-skip { min-width: 140px; }
 .intro-go {
@@ -1720,8 +1746,8 @@ body.arcade-christmas .result-panel {
   animation: answerReveal .82s var(--spring) .12s both;
 }
 @keyframes answerReveal {
-  0%   { opacity: 0; transform: scale(2.1) rotate(-4deg); filter: blur(6px); }
-  55%  { opacity: 1; transform: scale(.92) rotate(1deg); filter: blur(0); }
+  0%   { opacity: 0; transform: scale(2.1) rotate(-4deg); }
+  55%  { opacity: 1; transform: scale(.92) rotate(1deg); }
   100% { opacity: 1; transform: none; }
 }
 .result-reveal {
@@ -2847,11 +2873,7 @@ body.theme-gingerbread {
   from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0; }
   to   { background-position: 0 22px, 0 22px, 18px 35px, 0 0, 0 0; }
 }
-.card .card-back.pattern-candywrap, .pattern-preview.pattern-candywrap { animation: pattern-candywrap 8s linear infinite; }
-@keyframes pattern-candywrap {
-  from { background-position: 0 0, 0 0, 0 0, 0 0; }
-  to   { background-position: 0 0, 0 0, 0 0, 0 0; }
-}
+/* candywrap's motion lives in ::before (candy-swirl); the back itself is static. */
 @keyframes candy-swirl {
   to { transform: rotate(360deg); }
 }
@@ -2861,9 +2883,14 @@ body.theme-gingerbread {
   to   { background-position: 0 -12px, 20px 4px, 10px 20px, 0 -12px, 0 0; opacity: 1; }
 }
 @keyframes fairy-glow {
-  from { opacity: .45; filter: blur(3px); }
-  to   { opacity: .95; filter: blur(7px); }
+  from { opacity: .45; }
+  to   { opacity: .95; }
 }
+/* Hidden faces should not keep painting/animating behind a flipped card. */
+.card.flipped .card-back,
+.card.flipped .card-back::before,
+.card.flipped .card-back::after,
+.card.gone .card-back { animation-play-state: paused; }
 
 /* ============================================================
    STATISTICS
@@ -3253,10 +3280,75 @@ body.theme-gingerbread {
   .panel-actions .px-btn { padding: 12px 6px; font-size: 9px; }
 }
 
+/* Touch devices must not keep a sticky :hover filter latched after a tap. */
+@media (hover: none) {
+  .card:not(.flipped):not(.gone):hover { transform: none; filter: none; }
+  .card:hover .card-front::before { transform: translateX(-45%); }
+  .menu-fish:hover { filter: drop-shadow(0 0 6px var(--glow, currentColor)); }
+  .px-btn:hover, .menu-btn:hover, .burn-btn:hover,
+  .switch-cta:hover, .google-btn:hover { filter: none; }
+  .arcade-section:hover, .arcade-mode:hover, .tool-btn:hover { box-shadow: 0 5px 0 var(--line); }
+}
+
+/* Phones and short landscape screens keep the artwork but skip the motions
+   that force full repaints on low-end GPUs. */
+@media (max-width: 620px), (max-height: 620px) {
+  .menu-frame::before { inset: -16%; filter: blur(12px); animation-duration: 24s; }
+  .menu-grid { animation: none; }
+  .menu-grid::before { animation: none; }
+  .card .card-back[class*="pattern-"]:not(.pattern-solid) { animation: none !important; }
+  .card .card-back[class*="pattern-"]:not(.pattern-solid)::after,
+  .pattern-preview:not(.pattern-solid)::after { animation: none; opacity: .35; }
+  .theme-fish { animation: none; }
+  .shop-event-banner, .shop-snow::before, .shop-snow::after { animation: none; }
+}
+
+/* Auto-detected or manually enabled low-power tier. The flip, reveal, burn
+   and reward feedback all remain; only decorative layers are trimmed. */
+body.low-power .menu-frame::before { inset: -12%; filter: none; animation: none; opacity: .3; }
+body.low-power .menu-grid,
+body.low-power .menu-grid::before { animation: none; }
+body.low-power .spark,
+body.low-power .menu-fish,
+body.low-power .menu-fish .fish-inner { animation: none; }
+body.low-power .menu-fish { transform: translate3d(14vw, 0, 0); filter: none; opacity: .72; }
+body.low-power .menu-fish:hover { transform: translate3d(14vw, 0, 0); filter: none; }
+body.low-power .card .card-back[class*="pattern-"]:not(.pattern-solid),
+body.low-power .card .card-back[class*="pattern-"]:not(.pattern-solid)::after,
+body.low-power .pattern-preview:not(.pattern-solid)::after { animation: none !important; }
+body.low-power .card .card-back.pattern-fairylights::before { animation: none; filter: blur(5px); }
+body.low-power .flip-btn .pixel-fish { animation: none; filter: none; }
+body.low-power .card:not(.flipped):not(.gone):hover { filter: none; }
+body.low-power .card.flipping::after { box-shadow: none; }
+body.low-power .card.flipping .card-front::after { animation: none; opacity: 0; }
+body.low-power .reward-fish { filter: none; }
+body.low-power .overlay,
+body.low-power .intro-overlay { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(5, 3, 12, .9); }
+body.low-power .answer-slam.show { animation: slamOutLite .5s ease-out forwards; }
+@keyframes slamOutLite {
+  0%   { opacity: 0; transform: scale(1.12); }
+  18%  { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+body.low-power .theme-fish,
+body.low-power .shop-event-banner,
+body.low-power .shop-snow::before,
+body.low-power .shop-snow::after,
+body.low-power .snow-glyph,
+body.low-power .timer-head strong,
+body.low-power #screen-game.timer-hot::before,
+body.low-power #screen-game.timer-critical::before,
+body.low-power .logo { animation: none; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
+    will-change: auto !important;
+  }
+  .overlay, .intro-overlay {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
